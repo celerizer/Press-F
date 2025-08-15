@@ -20,7 +20,7 @@ public:
 
 private:
   QGamepad m_Gamepads[2];
-  QTimer *m_Timer;
+  QThread *m_EmulationThread;
   QToolBar *m_Toolbar;
 
   QPfFramebuffer *m_Framebuffer;
@@ -32,12 +32,15 @@ private:
   QByteArray m_AudioBuffer;
   QIODevice *m_AudioDevice;
 
+  bool m_Active = true;
   bool m_BiosLoaded = false;
   bool m_ClickedButtons[4];
 
   void loadBios(void);
 
   bool loadCartridge(QString Filename);
+
+  void timing(void);
 
   /**
    * Returns whether or not one of the UI buttons for console input was recently
@@ -53,7 +56,6 @@ private slots:
   void onButton4(void);
   void onDebugger(void);
   void onEjectCart(void);
-  void onFrame(void);
   void onLoadCart(void);
   void onReset(void);
   void onSettings(void);

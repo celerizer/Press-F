@@ -14,8 +14,10 @@ extern "C"
 #include "mainwindow.h"
 #include "registerswindow.h"
 
+#include <chrono>
 #include <cstdio>
 #include <string>
+#include <thread>
 
 #include <QApplication>
 #include <QDropEvent>
@@ -25,8 +27,11 @@ extern "C"
 #include <QFile>
 #include <QMessageBox>
 #include <QMimeData>
-#include <QTimer>
+#include <QThread>
 #include <QToolButton>
+
+using namespace std;
+using namespace std::chrono;
 
 MainWindow::MainWindow()
 {
@@ -112,7 +117,7 @@ MainWindow::MainWindow()
   pressf_init(&g_ChannelF);
   f8_system_init(&g_ChannelF, F8_SYSTEM_CHANNEL_F);
 
-  for (int i = 0; i < g_ChannelF.f8device_count; i++)
+  for (unsigned i = 0; i < g_ChannelF.f8device_count; i++)
     printf("Device %u: %s: $%04X - $%04X - size %04X\n", i,
            g_ChannelF.f8devices[i].name,
            g_ChannelF.f8devices[i].start,
@@ -131,61 +136,80 @@ MainWindow::MainWindow()
   layout->setSpacing(0);
   setLayout(layout);
 
-  m_Timer = new QTimer(this);
-  connect(m_Timer, SIGNAL(timeout()), this, SLOT(onFrame()));
-  m_Timer->start(1000 / 60);
+  m_EmulationThread = QThread::create([this]{timing();});
+  m_EmulationThread->start();
 
   m_Registers = new RegistersWindow();
 }
 
-void MainWindow::onFrame()
+void MainWindow::timing(void)
 {
-  /* Input */
-  set_input_button(0, INPUT_TIME, m_Gamepads[0].buttonL1() || wasClicked(0));
-  set_input_button(0, INPUT_MODE, m_Gamepads[0].buttonSelect() || wasClicked(1));
-  set_input_button(0, INPUT_HOLD, m_Gamepads[0].buttonR1() || wasClicked(2));
-  set_input_button(0, INPUT_START, m_Gamepads[0].buttonStart() || wasClicked(3));
+  auto next = steady_clock::now();
 
-  set_input_button(4, INPUT_RIGHT,      m_Gamepads[0].buttonRight());
-  set_input_button(4, INPUT_LEFT,       m_Gamepads[0].buttonLeft());
-  set_input_button(4, INPUT_BACK,       m_Gamepads[0].buttonDown());
-  set_input_button(4, INPUT_FORWARD,    m_Gamepads[0].buttonUp());
-  set_input_button(4, INPUT_ROTATE_CCW, m_Gamepads[0].buttonX());
-  set_input_button(4, INPUT_ROTATE_CW,  m_Gamepads[0].buttonB());
-  set_input_button(4, INPUT_PULL,       m_Gamepads[0].buttonY());
-  set_input_button(4, INPUT_PUSH,       m_Gamepads[0].buttonA());
-
-  set_input_button(1, INPUT_RIGHT,      m_Gamepads[0].buttonRight());
-  set_input_button(1, INPUT_LEFT,       m_Gamepads[0].buttonLeft());
-  set_input_button(1, INPUT_BACK,       m_Gamepads[0].buttonDown());
-  set_input_button(1, INPUT_FORWARD,    m_Gamepads[0].buttonUp());
-  set_input_button(1, INPUT_ROTATE_CCW, m_Gamepads[0].buttonX());
-  set_input_button(1, INPUT_ROTATE_CW,  m_Gamepads[0].buttonB());
-  set_input_button(1, INPUT_PULL,       m_Gamepads[0].buttonY());
-  set_input_button(1, INPUT_PUSH,       m_Gamepads[0].buttonA());
-
-  /* Emulation loop */
-  if (m_BiosLoaded)
-    pressf_run(&g_ChannelF);
-
-  /* Video */
-  m_Framebuffer->update();
-
-  /* Audio */
-  for (int i = 0; i < g_ChannelF.f8device_count; i++)
+  while (m_Active)
   {
-    auto device = &g_ChannelF.f8devices[i];
+    /* Input */
+    set_input_button(0, INPUT_TIME, m_Gamepads[0].buttonL1() || wasClicked(0));
+    set_input_button(0, INPUT_MODE, m_Gamepads[0].buttonSelect() || wasClicked(1));
+    set_input_button(0, INPUT_HOLD, m_Gamepads[0].buttonR1() || wasClicked(2));
+    set_input_button(0, INPUT_START, m_Gamepads[0].buttonStart() || wasClicked(3));
 
-    if (device->type == F8_DEVICE_BEEPER)
+    set_input_button(4, INPUT_RIGHT,      m_Gamepads[0].buttonRight());
+    set_input_button(4, INPUT_LEFT,       m_Gamepads[0].buttonLeft());
+    set_input_button(4, INPUT_BACK,       m_Gamepads[0].buttonDown());
+    set_input_button(4, INPUT_FORWARD,    m_Gamepads[0].buttonUp());
+    set_input_button(4, INPUT_ROTATE_CCW, m_Gamepads[0].buttonX());
+    set_input_button(4, INPUT_ROTATE_CW,  m_Gamepads[0].buttonB());
+    set_input_button(4, INPUT_PULL,       m_Gamepads[0].buttonY());
+    set_input_button(4, INPUT_PUSH,       m_Gamepads[0].buttonA());
+
+    set_input_button(1, INPUT_RIGHT,      m_Gamepads[0].buttonRight());
+    set_input_button(1, INPUT_LEFT,       m_Gamepads[0].buttonLeft());
+    set_input_button(1, INPUT_BACK,       m_Gamepads[0].buttonDown());
+    set_input_button(1, INPUT_FORWARD,    m_Gamepads[0].buttonUp());
+    set_input_button(1, INPUT_ROTATE_CCW, m_Gamepads[0].buttonX());
+    set_input_button(1, INPUT_ROTATE_CW,  m_Gamepads[0].buttonB());
+    set_input_button(1, INPUT_PULL,       m_Gamepads[0].buttonY());
+    set_input_button(1, INPUT_PUSH,       m_Gamepads[0].buttonA());
+
+    /* Emulation loop */
+    if (m_BiosLoaded)
+      pressf_run(&g_ChannelF);
+
+    /* Video */
+    m_Framebuffer->update();
+
+    /* Audio */
+    for (unsigned i = 0; i < g_ChannelF.f8device_count; i++)
     {
-      m_AudioBuffer.append(reinterpret_cast<const char*>(((f8_beeper_t*)device->device)->samples), PF_SOUND_SAMPLES * 4);
-      if (m_AudioBuffer.size() > PF_SOUND_SAMPLES * 4 * 2)
+      auto device = &g_ChannelF.f8devices[i];
+
+      if (device->type == F8_DEVICE_BEEPER)
       {
-        m_AudioDevice->write(m_AudioBuffer.data(), PF_SOUND_SAMPLES * 4);
-        m_AudioBuffer.remove(0, static_cast<int>(PF_SOUND_SAMPLES * 4));
+        if (m_AudioDevice)
+        {
+          m_AudioBuffer.append(reinterpret_cast<const char*>(
+            reinterpret_cast<f8_beeper_t*>(device->device)->samples),
+            PF_SOUND_SAMPLES * 4);
+          if (m_AudioBuffer.size() > PF_SOUND_SAMPLES * 4 * 2)
+          {
+            m_AudioDevice->write(m_AudioBuffer.data(), PF_SOUND_SAMPLES * 4);
+            m_AudioBuffer.remove(0, static_cast<int>(PF_SOUND_SAMPLES * 4));
+          }
+        }
+        break;
       }
-      break;
     }
+
+    auto time = static_cast<unsigned>(1000000000 / 60.0);
+
+    /* Wake up right before next frames is needed */
+    this_thread::sleep_until(next - milliseconds(2));
+
+    /* Waitloop until exact timing */
+    while (steady_clock::now() < next);
+
+    next += nanoseconds(time);
   }
 }
 
