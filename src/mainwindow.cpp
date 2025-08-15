@@ -215,10 +215,17 @@ void MainWindow::timing(void)
 
 void MainWindow::onEjectCart()
 {
+  f8_device_t *device;
   auto dummy = reinterpret_cast<u8*>(calloc(0x0400, 1));
 
-  for (unsigned i = 0; i < 0x1800; i += 0x0400)
-    f8_write(&g_ChannelF, 0x0800 + i, dummy, sizeof(dummy));
+  for (unsigned i = 0; i < g_ChannelF.f8device_count; i++)
+  {
+    device = &g_ChannelF.f8devices[i];
+    if (device->type == F8_DEVICE_3851 && device->start >= 0x0800)
+      f8_write(&g_ChannelF, device->start, dummy, device->length);
+  }
+
+  free(dummy);
 }
 
 void MainWindow::loadBios(void)
