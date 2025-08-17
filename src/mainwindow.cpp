@@ -8,6 +8,7 @@ extern "C"
   #include "libpressf/src/input.h"
   #include "libpressf/src/hw/system.h"
   #include "libpressf/src/hw/beeper.h"
+  #include "libpressf/src/hw/schach_led.h"
 }
 
 #include "main.h"
@@ -91,6 +92,10 @@ MainWindow::MainWindow()
   connect(ButDebugger, SIGNAL(clicked()), this, SLOT(onDebugger()));
   m_Toolbar->addWidget(ButDebugger);
 
+  m_LedIcon = new QToolButton(this);
+  m_LedIcon->setStyleSheet("QToolButton::menu-indicator { image: none; }");
+  m_Toolbar->addWidget(m_LedIcon);
+
   /* Setup window properties */
   setWindowTitle("Press F");
   setWindowIcon(QIcon(":/icons/logo"));
@@ -120,9 +125,9 @@ MainWindow::MainWindow()
   for (unsigned i = 0; i < g_ChannelF.f8device_count; i++)
     printf("Device %u: %s: $%04X - $%04X - size %04X\n", i,
            g_ChannelF.f8devices[i].name,
-           g_ChannelF.f8devices[i].start,
-           g_ChannelF.f8devices[i].end,
-           g_ChannelF.f8devices[i].length);
+           g_ChannelF.f8devices[i].mappings[0].start,
+           g_ChannelF.f8devices[i].mappings[0].end,
+           g_ChannelF.f8devices[i].mappings[0].length);
 
   loadBios();
 
@@ -197,7 +202,15 @@ void MainWindow::timing(void)
             m_AudioBuffer.remove(0, static_cast<int>(PF_SOUND_SAMPLES * 4));
           }
         }
-        break;
+      }
+      else if (device->type == F8_DEVICE_SCHACH_LED)
+      {
+        auto led = reinterpret_cast<f8_schach_led_t*>(device->device);
+
+        if (led->state == F8_SCHACH_LED_OFF)
+          m_LedIcon->setIcon(QIcon(":/icons/led_off.png"));
+        else if (led->state == F8_SCHACH_LED_ON)
+          m_LedIcon->setIcon(QIcon(":/icons/led_on.png"));
       }
     }
 
@@ -221,8 +234,8 @@ void MainWindow::onEjectCart()
   for (unsigned i = 0; i < g_ChannelF.f8device_count; i++)
   {
     device = &g_ChannelF.f8devices[i];
-    if (device->type == F8_DEVICE_3851 && device->start >= 0x0800)
-      f8_write(&g_ChannelF, device->start, dummy, device->length);
+    if (device->type == F8_DEVICE_3851 && device->mappings[0].start >= 0x0800)
+      f8_write(&g_ChannelF, device->mappings[0].start, dummy, device->mappings[0].length);
   }
 
   free(dummy);

@@ -32,6 +32,8 @@ private:
   QByteArray m_AudioBuffer;
   QIODevice *m_AudioDevice;
 
+  QToolButton *m_LedIcon;
+
   bool m_Active = true;
   bool m_BiosLoaded = false;
   bool m_ClickedButtons[4];

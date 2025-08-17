@@ -2,5 +2,7 @@
     <qresource prefix="/icons">
         <file>logo</file>
         <file>sys</file>
+        <file>led_off.png</file>
+        <file>led_on.png</file>
     </qresource>
 </RCC>

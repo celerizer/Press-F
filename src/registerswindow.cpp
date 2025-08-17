@@ -103,7 +103,7 @@ RegistersWindow::RegistersWindow()
           this, SLOT(onClickCommand(int, int, int, int)));
   for (i = 0; i < m_CommandsList->rowCount(); i++)
   {
-    auto rom = g_ChannelF.f8devices[1].data;
+    auto rom = g_ChannelF.f8devices[1].mappings[0].data;
     snprintf(temp_string, sizeof(temp_string), "%04X", i);
     m_CommandsList->setItem(i, 0, new QTableWidgetItem(QString(temp_string)));
 
