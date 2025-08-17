@@ -163,14 +163,14 @@ void MainWindow::timing(void)
     set_input_button(4, INPUT_PULL,       m_Gamepads[0].buttonY());
     set_input_button(4, INPUT_PUSH,       m_Gamepads[0].buttonA());
 
-    set_input_button(1, INPUT_RIGHT,      m_Gamepads[0].buttonRight());
-    set_input_button(1, INPUT_LEFT,       m_Gamepads[0].buttonLeft());
-    set_input_button(1, INPUT_BACK,       m_Gamepads[0].buttonDown());
-    set_input_button(1, INPUT_FORWARD,    m_Gamepads[0].buttonUp());
-    set_input_button(1, INPUT_ROTATE_CCW, m_Gamepads[0].buttonX());
-    set_input_button(1, INPUT_ROTATE_CW,  m_Gamepads[0].buttonB());
-    set_input_button(1, INPUT_PULL,       m_Gamepads[0].buttonY());
-    set_input_button(1, INPUT_PUSH,       m_Gamepads[0].buttonA());
+    set_input_button(1, INPUT_RIGHT,      m_Gamepads[1].buttonRight());
+    set_input_button(1, INPUT_LEFT,       m_Gamepads[1].buttonLeft());
+    set_input_button(1, INPUT_BACK,       m_Gamepads[1].buttonDown());
+    set_input_button(1, INPUT_FORWARD,    m_Gamepads[1].buttonUp());
+    set_input_button(1, INPUT_ROTATE_CCW, m_Gamepads[1].buttonX());
+    set_input_button(1, INPUT_ROTATE_CW,  m_Gamepads[1].buttonB());
+    set_input_button(1, INPUT_PULL,       m_Gamepads[1].buttonY());
+    set_input_button(1, INPUT_PUSH,       m_Gamepads[1].buttonA());
 
     /* Emulation loop */
     if (m_BiosLoaded)
