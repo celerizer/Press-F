@@ -64,22 +64,26 @@ MainWindow::MainWindow()
 
   QToolButton *ButOne = new QToolButton(this);
   ButOne->setText("1 / TIME");
-  connect(ButOne, SIGNAL(clicked()), this, SLOT(onButton1()));
+  connect(ButOne, &QToolButton::pressed, this, [this]() { m_ClickedButtons[0] = true; });
+  connect(ButOne, &QToolButton::released, this, [this]() { m_ClickedButtons[0] = false; });
   m_Toolbar->addWidget(ButOne);
 
   QToolButton *ButTwo = new QToolButton(this);
   ButTwo->setText("2 / MODE");
-  connect(ButTwo, SIGNAL(clicked()), this, SLOT(onButton2()));
+  connect(ButTwo, &QToolButton::pressed, this, [this]() { m_ClickedButtons[1] = true; });
+  connect(ButTwo, &QToolButton::released, this, [this]() { m_ClickedButtons[1] = false; });
   m_Toolbar->addWidget(ButTwo);
 
   QToolButton *ButThree = new QToolButton(this);
   ButThree->setText("3 / HOLD");
-  connect(ButThree, SIGNAL(clicked()), this, SLOT(onButton3()));
+  connect(ButThree, &QToolButton::pressed, this, [this]() { m_ClickedButtons[2] = true; });
+  connect(ButThree, &QToolButton::released, this, [this]() { m_ClickedButtons[2] = false; });
   m_Toolbar->addWidget(ButThree);
 
   QToolButton *ButFour = new QToolButton(this);
   ButFour->setText("4 / START");
-  connect(ButFour, SIGNAL(clicked()), this, SLOT(onButton4()));
+  connect(ButFour, &QToolButton::pressed, this, [this]() { m_ClickedButtons[3] = true; });
+  connect(ButFour, &QToolButton::released, this, [this]() { m_ClickedButtons[3] = false; });
   m_Toolbar->addWidget(ButFour);
 
   QToolButton *ButSettings = new QToolButton(this);
@@ -154,10 +158,10 @@ void MainWindow::timing(void)
   while (m_Active)
   {
     /* Input */
-    set_input_button(0, INPUT_TIME, m_Gamepads[0].buttonL1() || wasClicked(0));
-    set_input_button(0, INPUT_MODE, m_Gamepads[0].buttonSelect() || wasClicked(1));
-    set_input_button(0, INPUT_HOLD, m_Gamepads[0].buttonR1() || wasClicked(2));
-    set_input_button(0, INPUT_START, m_Gamepads[0].buttonStart() || wasClicked(3));
+    set_input_button(0, INPUT_TIME, m_Gamepads[0].buttonL1() || m_ClickedButtons[0]);
+    set_input_button(0, INPUT_MODE, m_Gamepads[0].buttonSelect() || m_ClickedButtons[1]);
+    set_input_button(0, INPUT_HOLD, m_Gamepads[0].buttonR1() || m_ClickedButtons[2]);
+    set_input_button(0, INPUT_START, m_Gamepads[0].buttonStart() || m_ClickedButtons[3]);
 
     set_input_button(4, INPUT_RIGHT,      m_Gamepads[0].buttonRight());
     set_input_button(4, INPUT_LEFT,       m_Gamepads[0].buttonLeft());
@@ -300,26 +304,6 @@ bool MainWindow::loadCartridge(QString Filename)
   }
 }
 
-void MainWindow::onButton1()
-{
-  m_ClickedButtons[0] = true;
-}
-
-void MainWindow::onButton2()
-{
-  m_ClickedButtons[1] = true;
-}
-
-void MainWindow::onButton3()
-{
-  m_ClickedButtons[2] = true;
-}
-
-void MainWindow::onButton4()
-{
-  m_ClickedButtons[3] = true;
-}
-
 void MainWindow::onDebugger()
 {
   if (!m_Registers->isVisible())
@@ -352,19 +336,6 @@ void MainWindow::onSettings()
   settingsWidget->resize(400, 300);
   settingsWidget->show();
 }
-
-bool MainWindow::wasClicked(unsigned index)
-{
-  if (index > sizeof(m_ClickedButtons))
-    return false;
-  else
-  {
-    bool val = m_ClickedButtons[index];
-    m_ClickedButtons[index] = false;
-
-    return val;
-  }
-};
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {

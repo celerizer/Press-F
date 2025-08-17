@@ -44,18 +44,7 @@ private:
 
   void timing(void);
 
-  /**
-   * Returns whether or not one of the UI buttons for console input was recently
-   * clicked, so general controller input doesn't override it.
-   * @param index 0-3
-   */
-  bool wasClicked(unsigned index);
-
 private slots:
-  void onButton1(void);
-  void onButton2(void);
-  void onButton3(void);
-  void onButton4(void);
   void onDebugger(void);
   void onEjectCart(void);
   void onLoadCart(void);
