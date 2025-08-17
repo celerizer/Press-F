@@ -175,6 +175,7 @@ void RegistersWindow::onClickCommand(int Row, int Column, int PreRow, int PreCol
   Q_UNUSED(Column)
   Q_UNUSED(PreRow)
   Q_UNUSED(PreColumn)
+  Q_UNUSED(Row)
   //m_CommandDescription->setText(opcodes[g_ChannelF.rom[Row]].description);
 }
 
